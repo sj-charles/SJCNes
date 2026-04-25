@@ -1,0 +1,5 @@
+nes-emu
+*.o
+mylog.txt
+nestest.nes
+nestest.log
