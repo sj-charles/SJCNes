@@ -147,6 +147,10 @@ void ppu_step(PPU *ppu) {
         ppu->nmi_pending = 0;
     }
 
+    if (ppu->scanline == 240 && ppu->cycle == 1) {
+        ppu_render_sprites(ppu);
+    }
+
     if (ppu->scanline >= 0 && ppu->scanline < 240 && 
         ppu->cycle >= 1 && ppu->cycle <= 256) {
         ppu_render_pixel(ppu);
@@ -183,4 +187,39 @@ void ppu_render_pixel(PPU *ppu) {
     
   uint8_t palette_index = ppu->palette[pixel & 3];
   ppu->framebuffer[y * 256 + x] = nes_palette[palette_index & 0x3F];
+}
+
+void ppu_render_sprites(PPU *ppu) {
+for(int i = 0; i < 64; i++) {
+    uint8_t y          = ppu->oam[i * 4 + 0];
+    uint8_t tile_index = ppu->oam[i * 4 + 1];
+    uint8_t attr       = ppu->oam[i * 4 + 2];
+    uint8_t x          = ppu->oam[i * 4 + 3];
+
+    int flip_h = (attr & 0x40) ? 1 : 0;
+    int flip_v = (attr & 0x80) ? 1 : 0;
+
+    uint16_t pattern_base = (ppu->PPUCTRL & 0x08) ? 0x1000 : 0x0000;
+
+    for(int row = 0; row < 8; row++) {
+        int effective_row = flip_v ? (7 - row) : row;
+        uint16_t pattern_addr = pattern_base + tile_index * 16 + effective_row;
+        uint8_t lo = ppu->chr_rom[pattern_addr];
+        uint8_t hi = ppu->chr_rom[pattern_addr + 8];
+
+        for(int col = 0; col < 8; col++) {
+            int effective_col = flip_h ? (7 - col) : col;
+            int pixel = ((hi >> (7 - effective_col)) & 1) << 1 |
+                        ((lo >> (7 - effective_col)) & 1);
+            if(pixel == 0) continue;
+
+            int px = x + col;
+            int py = y + row + 1;
+            if(px >= 256 || py >= 240) continue;
+
+            uint8_t palette_index = ppu->palette[0x10 + (attr & 0x03) * 4 + pixel];
+            ppu->framebuffer[py * 256 + px] = nes_palette[palette_index & 0x3F];
+        }
+    }
+  }
 }

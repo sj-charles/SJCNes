@@ -36,10 +36,26 @@ int main() {
     SDL_Event event;
 
     while (running) {
+        uint32_t frame_start = SDL_GetTicks();
+
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) running = 0;
         }
 
+    const uint8_t *keys = SDL_GetKeyboardState(NULL);
+    uint8_t controller_state = 0;
+
+        if (keys[SDL_SCANCODE_Z])           controller_state |= 0x80; // A
+        if (keys[SDL_SCANCODE_X])           controller_state |= 0x40; // B
+        if (keys[SDL_SCANCODE_RSHIFT])      controller_state |= 0x20; // Select
+        if (keys[SDL_SCANCODE_RETURN])      controller_state |= 0x10; // Start
+        if (keys[SDL_SCANCODE_UP])          controller_state |= 0x08; // Up
+        if (keys[SDL_SCANCODE_DOWN])        controller_state |= 0x04; // Down
+        if (keys[SDL_SCANCODE_LEFT])        controller_state |= 0x02; // Left
+        if (keys[SDL_SCANCODE_RIGHT])       controller_state |= 0x01; // Right
+
+        bus_set_controller(0, controller_state);
+        
         int current_frame = ppu.frame;
         while (ppu.frame == current_frame) {
             cpu_step(&cpu);
@@ -52,10 +68,16 @@ int main() {
             }
         }
 
+
         SDL_UpdateTexture(texture, NULL, ppu.framebuffer, 256 * sizeof(uint32_t));
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
+
+        uint32_t frame_time = SDL_GetTicks() - frame_start;
+        if (frame_time < 16) {
+            SDL_Delay(16 - frame_time);
+        }
     }
 
     SDL_DestroyTexture(texture);

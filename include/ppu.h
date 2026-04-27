@@ -37,3 +37,4 @@ void ppu_write_register(PPU *ppu, uint16_t address, uint8_t data);
 void ppu_step(PPU *ppu);
 void ppu_connect_chr(PPU *ppu, uint8_t *chr);
 void ppu_render_pixel(PPU *ppu);
+void ppu_render_sprites(PPU *ppu);
