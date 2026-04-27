@@ -11,3 +11,4 @@ typedef struct  {
 
 void cpu_init(CPU *cpu);
 void cpu_step(CPU *cpu);
+void cpu_nmi(CPU *cpu);

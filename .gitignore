@@ -3,3 +3,4 @@ nes-emu
 mylog.txt
 nestest.nes
 nestest.log
+*.nes

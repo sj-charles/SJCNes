@@ -1388,3 +1388,12 @@ void cpu_step(CPU *cpu) {
 
 
 }
+
+void cpu_nmi(CPU *cpu) {
+    stack_push(cpu, (cpu->pc >> 8) & 0xFF);
+    stack_push(cpu, cpu->pc & 0xFF);
+    stack_push(cpu, cpu->status);
+    uint8_t high_byte = read(0xFFFB);
+    uint8_t low_byte = read(0xFFFA);
+    cpu->pc = (high_byte << 8) | low_byte;
+}
