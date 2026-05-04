@@ -1,5 +1,6 @@
 #include "bus.h"
 #include "rom.h"
+#include "apu.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -8,6 +9,7 @@ static uint8_t controller[2] = {0, 0};
 static uint8_t controller_shift[2] = {0, 0};
 static uint8_t strobe = 0;
 static uint8_t prg_ram[8192] = {0};
+static APU *apu_ref = NULL;
 
 void bus_set_controller(int port, uint8_t state)
 {
@@ -18,6 +20,11 @@ void bus_latch_controllers(void)
 {
     controller_shift[0] = controller[0];
     controller_shift[1] = controller[1];
+}
+
+void bus_connect_apu(APU *apu)
+{
+    apu_ref = apu;
 }
 
 uint8_t mem[2048];
@@ -45,15 +52,15 @@ uint8_t read(uint16_t address)
 
     if (address >= 0x2000 && address <= 0x3FFF && ppu_ref != NULL)
         return ppu_read_register(ppu_ref, 0x2000 + (address % 8));
+
     if (address == 0x4016)
     {
         uint8_t val = controller_shift[0] & 1;
         if (!strobe)
             controller_shift[0] >>= 1;
-        if (val)
-            //printf("4016 read: val=%d shift=%02X\n", val, controller_shift[0]);
         return 0x40 | val;
     }
+
     if (address == 0x4017)
     {
         uint8_t val = controller_shift[1] & 1;
@@ -165,6 +172,13 @@ void write(uint16_t address, uint8_t data)
         }
         return;
     }
+
+    if (address >= 0x4000 && address <= 0x4015 && apu_ref != NULL)
+    {
+        apu_write(apu_ref, address, data);
+        return;
+    }
+
     if (address <= 0x1FFF)
     {
         mem[address & 0x07FF] = data;
