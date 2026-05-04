@@ -17,6 +17,7 @@ typedef struct {
     uint8_t w;   
 
     uint8_t *chr_rom;
+    uint8_t mirroring;
 
     uint8_t oam[256];       
     uint8_t vram[2048];     

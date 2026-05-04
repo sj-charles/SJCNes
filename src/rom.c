@@ -22,11 +22,22 @@ int rom_load(ROM *rom, const char *path) {
         return 0;
     }
 
+    printf("Header bytes 6,7: %02X %02X\n", header[6], header[7]);
+    
     rom->prg_rom_banks = header[4];
     rom->chr_rom_banks = header[5];
+    rom->mirroring = header[6] & 0x01;
 
     if (header[6] & 0x04)
         fseek(file, 512, SEEK_CUR);
+
+    rom->mapper_id = (header[6] >> 4) | (header[7] & 0xF0);
+    rom->mmc1.shift = 0;
+    rom->mmc1.shift_count = 0;
+    rom->mmc1.control = 0x0C;
+    rom->mmc1.chr_bank0 = 0;
+    rom->mmc1.chr_bank1 = 0;
+    rom->mmc1.prg_bank = 0;
 
     int prg_size = rom->prg_rom_banks * 16384;
     rom->prg_rom = malloc(prg_size);

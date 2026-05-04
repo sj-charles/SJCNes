@@ -1,7 +1,7 @@
 #include "cpu.h"
 #include "bus.h"
 #include "addressing.h"
-
+#include <stdio.h>
 #include <stdint.h>
 
 
@@ -1392,8 +1392,11 @@ void cpu_step(CPU *cpu) {
 void cpu_nmi(CPU *cpu) {
     stack_push(cpu, (cpu->pc >> 8) & 0xFF);
     stack_push(cpu, cpu->pc & 0xFF);
+    cpu->status &= ~0x10;
+    cpu->status |= 0x20;
+    cpu->status |= 0x04;
     stack_push(cpu, cpu->status);
-    uint8_t high_byte = read(0xFFFB);
-    uint8_t low_byte = read(0xFFFA);
-    cpu->pc = (high_byte << 8) | low_byte;
+    uint8_t lo = read(0xFFFA);
+    uint8_t hi = read(0xFFFB);
+    cpu->pc = (hi << 8) | lo;
 }
